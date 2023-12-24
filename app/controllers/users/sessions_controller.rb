@@ -1,18 +1,22 @@
 class Users::SessionsController < Devise::SessionsController
   respond_to :json
+  skip_forgery_protection only: [:create]
 
-  def destroy 
+  def destroy
     @logged_in_user = current_user
-    super 
+    super
   end
 
   private
 
   def respond_with(resource, _opts = {})
     if !resource.id.nil?
-      render json: { message: 'You are logged in.' }, status: :created
+      cookies["CSRF-TOKEN"] = form_authenticity_token
+      response.set_header("X-CSRF-Token", form_authenticity_token)
+
+      render json: { message: "You are logged in." }, status: :created
     else
-      render json: { message: 'Authentication failed.'}, status: :unauthorized
+      render json: { message: "Authentication failed." }, status: :unauthorized
     end
   end
 
@@ -27,6 +31,6 @@ class Users::SessionsController < Devise::SessionsController
   end
 
   def log_out_failure
-    render json: { message: "Hmm nothing happened."}, status: :unauthorized
+    render json: { message: "Hmm nothing happened." }, status: :unauthorized
   end
 end
